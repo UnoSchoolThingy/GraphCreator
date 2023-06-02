@@ -9,25 +9,46 @@
 using std::cout;
 
 struct Edge {
-  struct Vertex* dst;
+  struct Vertex* e1, *e2;
   float weight;
 
   Edge() {
     memset(this, 0x0, sizeof(Edge));
   }
 
-  Edge(struct Vertex* dst, float weight) {
-    this->dst = dst;
+  Edge(Vertex* e1, Vertex* e2, float weight) {
+    this->e1 = e1;
+    this->e2 = e2;
     this->weight = weight;
+  }
+
+  Vertex* getOtherEnd(Vertex* v) {
+    return (v == e1) ? e2 : e1;
   }
 };
 
 struct Vertex { // basically a node
   char label[50];
-  std::vector<Edge> edges;
+  std::set<Edge*> edges;
 
   Vertex(char* label) {
     strcpy(this->label, label);
+  }
+
+  // Make a new edge and connect it 
+  void addEdge(Vertex* otherEnd, float weight) {
+    Edge* edge = new Edge(this, otherEnd, weight);
+    edges.insert(edge);
+    otherEnd->edges.insert(edge);
+  }
+
+  
+  
+  ~Vertex() {
+    for (Edge* e : edges) { // Go through all the edges and get rid of them 
+      e->getOtherEnd(this)->deleteEdge(e);
+      delete e;
+    }
   }
 };
 
@@ -38,6 +59,11 @@ struct TraversalInfo {
 
 struct Graph {
   std::vector<Vertex*> vertices;
+
+  void addVertex(char* name) {
+    vertices.push_back(new Vertex(name));
+  }
+
 
   inline bool empty() {
     return vertices.empty();
@@ -50,6 +76,28 @@ struct Graph {
     return nullptr;
   }
 
+  // Add an edge with two vertex labels and weight 
+  bool addEdge(char* v1n, char* v2n, float weight) {
+    Vertex* v1 = findVertex(v1n);
+    Vertex* v2 = findVertex(v2n);
+    if (!v1 || !v2) return false;
+    v1.addEdge(v2, weight);
+    return true;
+  }
+
+  bool removeEdge(char* v1n, char* v2n) {
+    Vertex* v1 = findVertex(v1n);
+    Vertex* v2 = findVertex(v2n);
+    if (!v1 || !v2) return false;
+    for (Edge* e : v1->edges) {
+      if (e->getOtherSide(v1) == v2) { // Found edge
+	
+	return true;
+      }
+    }
+    return false;
+  }
+  
   // Dijkstra thingy 
   // https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
   void findPath(char* begin, char* end) { 
