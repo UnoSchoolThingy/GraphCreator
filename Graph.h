@@ -1,8 +1,9 @@
 #include <iostream>
 #include <cstring>
+#include <algorithm>
 #include <limits>
 #include <vector>
-#include <queue>
+#include <stack>
 #include <set>
 #include <map>
 
@@ -59,7 +60,7 @@ struct Vertex { // basically a node
 };
 
 struct TraversalInfo {
-  float dist = std::numeric_limits<float>::max(); // Distance from source to this node 
+  int dist = 69420; // Distance from source to this node 
   Vertex* cameFrom = nullptr;
 };
 
@@ -99,10 +100,10 @@ struct Graph {
     if (!v1 || !v2) return false;
     for (Edge* e : v1->edges) {
       if (e->getOtherEnd(v1) == v2) { // Found edge
-	v1->edges.erase(e);
-	v2->edges.erase(e);
-	delete e;
-	return true;
+        v1->edges.erase(e);
+        v2->edges.erase(e);
+        delete e;
+        return true;
       }
     }
     return false;
@@ -114,9 +115,9 @@ struct Graph {
     // Vertex destructor handles edges
     for (int i = 0; i < vertices.size(); i++) {
       if (v == vertices.at(i)) {
-	vertices.erase(vertices.begin() + i);
-	delete v;
-	return true;
+        vertices.erase(vertices.begin() + i);
+        delete v;
+        return true;
       }
     }
     return false;
@@ -131,11 +132,13 @@ struct Graph {
     }
     // Print adjacency table 
     cout << "TABLE:\n";
-    cout << "   |";
+    cout << "     |";
     for (int i = 0; i < size; i++) cout << (i < 10 ? "00" : "0") << i << '|';
     cout << endl;
+    for (int i = 0; i < size * 4 + 6; i++) cout << "-";
+    cout << endl;
     for (int y = 0; y < size; y++) {
-      cout << (y < 10 ? "00" : "0") << y << '|';
+      cout << (y < 10 ? "00" : "0") << y << "  |";
       for (int x = 0; x < size; x++) {
         if (x == y) {
           cout << "---|";
@@ -156,37 +159,64 @@ struct Graph {
   void findPath(char* begin, char* end) { 
     Vertex* start = findVertex(begin);
     Vertex* goal = findVertex(end);
-    if (start == nullptr || goal == nullptr) return;
+    if (start == nullptr || goal == nullptr) {
+      cout << "Invalid vertices!\n";
+      return;
+    }
     std::map<Vertex*, TraversalInfo> info;
     info[start].dist = 0.f;
+
+    // Using a vector so it re sorts every time (not just on insert/delete)
+    std::vector<Vertex*> epicSet(vertices);
     
-    auto cmp = [&info](Vertex* a, Vertex* b) -> bool {
-      return info[a].dist < info[b].dist;
-    };
-
-    std::set<Vertex*, decltype(cmp)> epicSet(cmp);
-
-    for (auto v : vertices) {
-      epicSet.insert(v);
-    }
-
     while (!epicSet.empty()) {
-      Vertex* u = *epicSet.begin();
+      // Resort the set because it only sorts on add/remove 
+      std::sort(epicSet.begin(), epicSet.end(), [&info](Vertex* a, Vertex* b) {
+        return info[a].dist < info[b].dist;
+      });
+
+      Vertex* u = epicSet.front();
       epicSet.erase(epicSet.begin());
 
       if (u == goal) { // Reached the goal! 
-	cout << "Path found, too insane!\n";
-	// Reconstruct path (will do later)
-	return;
+        cout << "Path found, too insane!\n";
+        // Reconstruct path 
+        std::stack<Vertex*> path;
+        int cost = 0;
+        while (u != start) {
+          path.push(u);
+          Vertex* prev = info[u].cameFrom;
+          cost += prev->getConnectingEdge(u)->weight;
+          u = prev;
+        }
+        cout << "Cost: " << cost << endl;
+        path.push(start);
+        // Pop out path in reverse order (which is the reverse of the reverse order so it's the right order) 
+        cout << "Path: ";
+        while (path.size() > 1) {
+          cout << path.top()->label << " -> ";
+          path.pop();
+        }
+        cout << path.top()->label << endl;
+        return;
       }
 
       for (Edge* e : u->edges) {
-	float alt = info[u].dist + e->weight;
-	TraversalInfo& vInfo = info[e->getOtherEnd(u)]; // e.dst is like v from the wikipedia thingy 
-	if (alt < vInfo.dist) {
-	  vInfo.dist = alt;
-	  vInfo.cameFrom = u;
-	}
+        // Check if epicSet still cotains e->getOtherEnd(u)
+        bool contains = false;
+        for (Vertex* v : epicSet) {
+          if (e->getOtherEnd(u) == v) {
+            contains = true;
+            break;
+          }
+        }
+        if (!contains) continue;
+        int alt = info[u].dist + e->weight;
+        TraversalInfo& vInfo = info[e->getOtherEnd(u)]; // e.dst is like v from the wikipedia thingy 
+        if (alt < vInfo.dist) {
+          vInfo.dist = alt;
+          vInfo.cameFrom = u;
+        }
       }
       
     }
