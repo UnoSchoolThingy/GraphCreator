@@ -12,7 +12,7 @@ struct Utils {
     int lenB = strlen(b);
     if (lenA != lenB) return false;
     for (int i = 0; i < lenA; i++) {
-      if (a[i] != b[i]) return false;
+      if (tolower(a[i]) != b[i]) return false;
     }
     return true;
   }

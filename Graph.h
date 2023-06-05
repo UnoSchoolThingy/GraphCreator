@@ -45,7 +45,7 @@ struct Vertex { // basically a node
   // Check if connected
   Edge* getConnectingEdge(Vertex* v) {
     for (Edge* e : edges) {
-      if (e->getOtherEnd(v) == v) return e;
+      if (e->getOtherEnd(this) == v) return e;
     }
     return nullptr;
   }
@@ -137,15 +137,15 @@ struct Graph {
     for (int y = 0; y < size; y++) {
       cout << (y < 10 ? "00" : "0") << y << '|';
       for (int x = 0; x < size; x++) {
-	if (x == y) {
-	  cout << "---|";
-	  continue;
-	}
-	Edge* e = vertices.at(x)->getConnectingEdge(vertices.at(y));
-	if (e != nullptr) {
-	  cout << (e->weight < 10 ? "00" : "0") << e->weight << '|';
-	}
-	else cout << "INF|";
+        if (x == y) {
+          cout << "---|";
+          continue;
+        }
+        Edge* e = vertices.at(x)->getConnectingEdge(vertices.at(y));
+        if (e != nullptr) {
+          cout << (e->weight < 10 ? "00" : "0") << e->weight << '|';
+        }
+        else cout << "INF|";
       }
       cout << endl;
     }
