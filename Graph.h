@@ -179,16 +179,20 @@ struct Graph {
       epicSet.erase(epicSet.begin());
 
       if (u == goal) { // Reached the goal! 
-        cout << "Path found, too insane!\n";
         // Reconstruct path 
         std::stack<Vertex*> path;
         int cost = 0;
         while (u != start) {
           path.push(u);
           Vertex* prev = info[u].cameFrom;
+          if (prev == nullptr) {
+            cout << "No path found!\n";
+            return;
+          }
           cost += prev->getConnectingEdge(u)->weight;
           u = prev;
         }
+        cout << "Path found!\n";
         cout << "Cost: " << cost << endl;
         path.push(start);
         // Pop out path in reverse order (which is the reverse of the reverse order so it's the right order) 
